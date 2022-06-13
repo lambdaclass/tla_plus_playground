@@ -5,7 +5,8 @@ CONSTANTS
     R           \* Max number of round
 
 VARIABLES 
-    nodeState,  \* Mapping of a round r to the state of the proposal
+    nodeState,  \* Mapping of a round r to the state of the proposal, 
+                \* the states are defined in ValidRoundStates.
     round,      \* Current round
     QCs         \* Set of received QCs
 

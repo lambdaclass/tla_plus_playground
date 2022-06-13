@@ -10,15 +10,15 @@ VARIABLES
     QCs         \* Set of received QCs
 
 ValidRoundStates == {"UNSEEN", "PREVOTE", "PRECOMMIT", "COMMIT", "COMMITED"}
+Rounds == 0..R
+TypeOK == /\ round \in Nat
+          /\ QCs \subseteq [r: Rounds, prevQC: Rounds \union {-1}]
+          /\ nodeState \in [Rounds -> ValidRoundStates]
+
 MAXIMUM(S) == CHOOSE x \in S : \A y \in S : x >= y
 MAX(a, b) == IF a > b THEN a ELSE b
-Rounds == 0..R
 
 AllQCs == [r: Rounds, prevQC: Rounds \union {-1}]
-
-TypeOK == /\ round \in Nat
-          /\ QCs \in SUBSET [r: Rounds, prevQC: Rounds]
-          /\ nodeState \in [Rounds -> ValidRoundStates]
 
 Init == /\ round = 0
         /\ QCs = {}
@@ -51,5 +51,5 @@ Next == \/ /\ \E qc \in AllQCs :(
 
 =============================================================================
 \* Modification History
-\* Last modified Mon Jun 13 12:39:16 ART 2022 by lambda
+\* Last modified Mon Jun 13 14:47:52 ART 2022 by lambda
 \* Created Mon Jun 13 08:53:58 ART 2022 by lambda

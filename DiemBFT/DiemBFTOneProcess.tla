@@ -1,6 +1,9 @@
 ------------------------- MODULE DiemBFTOneProcess -------------------------
 EXTENDS Naturals, Integers
 
+CONSTANTS     
+    R           \* Max number of round
+
 VARIABLES 
     nodeState,  \* Mapping of a round r to the state of the proposal
     round,      \* Current round
@@ -8,33 +11,45 @@ VARIABLES
 
 ValidRoundStates == {"UNSEEN", "PREVOTE", "PRECOMMIT", "COMMIT", "COMMITED"}
 MAXIMUM(S) == CHOOSE x \in S : \A y \in S : x >= y
-AllQCs == [r: Nat, prevQC: Nat]
+MAX(a, b) == IF a > b THEN a ELSE b
+Rounds == 0..R
+
+AllQCs == [r: Rounds, prevQC: Rounds \union {-1}]
 
 TypeOK == /\ round \in Nat
-          /\ QCs \in SUBSET [r: Nat, prevQC: Nat]
-          /\ nodeState \in [Nat -> ValidRoundStates]
+          /\ QCs \in SUBSET [r: Rounds, prevQC: Rounds]
+          /\ nodeState \in [Rounds -> ValidRoundStates]
 
 Init == /\ round = 0
         /\ QCs = {}
-        /\ nodeState = [n \in Nat |-> "UNSEEN"]
+        /\ nodeState = [n \in Rounds |-> "UNSEEN"]
 
-ExistsQC(r) == \E qc \in QCs : qc.r = r
+ExistsQC(r) == \E qc \in QCs : (qc.r = r)
 
-
-RoundCommited(r) == nodeState[r]' = "COMMITED"
+RoundReady(r) == nodeState' = [nodeState EXCEPT![r] = "PREVOTE"]
+RoundPreVoted(r) == nodeState' = [nodeState EXCEPT![r] = "PRECOMMIT"]
+RoundPreCommited(r) == nodeState' = [nodeState EXCEPT![r] = "COMMIT", ![r+1] = "PRECOMMIT"]
+RoundCommited(r) == nodeState' = [nodeState EXCEPT![r] = "COMMITED", ![r+1] = "COMMIT", ![r+2] = "PRECOMMIT"]
       
 NewQC(qc) == /\ qc.r >= round
-             /\ qc.prevQC \in QCs  
+             /\ (
+                    \/ (qc.prevQC = -1 /\ qc.r = 0) 
+                    \/ (round > 0 /\ ExistsQC(qc.prevQC) /\ qc.prevQC = round - 1)
+                )  
              /\ qc \notin QCs
-             /\ IF round > 2 /\ ExistsQC(round-1) /\ ExistsQC(round-2)
-               THEN RoundCommited(round-2)
-               ELSE TRUE
+             /\ IF qc.r >= 2 /\ ExistsQC(qc.r-1) /\ ExistsQC(qc.r-2)
+               THEN RoundCommited(qc.r-2)
+               ELSE IF qc.r >= 1 /\ ExistsQC(qc.r-1)
+               THEN RoundPreCommited(qc.r-1)
+               ELSE RoundPreVoted(qc.r)
              /\ QCs' = QCs \union {qc}
         
-NEXT == \/ /\ \E qc \in AllQCs : NewQC(qc)
-           /\ round' = round + 1
+Next == \/ /\ \E qc \in AllQCs :(
+                /\  NewQC(qc)
+                /\  round' = qc.r + 1
+             )
 
 =============================================================================
 \* Modification History
-\* Last modified Mon Jun 13 11:10:09 ART 2022 by lambda
+\* Last modified Mon Jun 13 12:39:16 ART 2022 by lambda
 \* Created Mon Jun 13 08:53:58 ART 2022 by lambda

@@ -1,6 +1,9 @@
 ------------------------- MODULE DiemBFTOneProcess -------------------------
 EXTENDS Naturals, Integers
 
+(***************************************************************************)
+(*  Global Constants and Variables                                         *)
+(***************************************************************************)
 CONSTANTS     
     R           \* Max number of round
 
@@ -10,23 +13,21 @@ VARIABLES
     round,      \* Current round
     QCs         \* Set of received QCs
 
+(***************************************************************************)
+(* Helper Predicates                                                       *)
+(***************************************************************************)
 ValidRoundStates == {"UNSEEN", "PREVOTE", "PRECOMMIT", "COMMIT", "COMMITED"}
 Rounds == 0..R
-TypeOK == /\ round \in Nat
-          /\ QCs \subseteq [r: Rounds, prevQC: Rounds \union {-1}]
-          /\ nodeState \in [Rounds -> ValidRoundStates]
 
 MAXIMUM(S) == CHOOSE x \in S : \A y \in S : x >= y
 MAX(a, b) == IF a > b THEN a ELSE b
 
 AllQCs == [r: Rounds, prevQC: Rounds \union {-1}]
-
-Init == /\ round = 0
-        /\ QCs = {}
-        /\ nodeState = [n \in Rounds |-> "UNSEEN"]
-
 ExistsQC(r) == \E qc \in QCs : (qc.r = r)
 
+(***************************************************************************)
+(* Formal Spec of Init State and Next State                                *)
+(***************************************************************************)
 RoundReady(r) == nodeState' = [nodeState EXCEPT![r] = "PREVOTE"]
 RoundPreVoted(r) == nodeState' = [nodeState EXCEPT![r] = "PRECOMMIT"]
 RoundPreCommited(r) == nodeState' = [nodeState EXCEPT![r] = "COMMIT", ![r+1] = "PRECOMMIT"]
@@ -45,12 +46,23 @@ NewQC(qc) == /\ qc.r >= round
                ELSE RoundPreVoted(qc.r)
              /\ QCs' = QCs \union {qc}
         
+Init == /\ round = 0
+        /\ QCs = {}
+        /\ nodeState = [n \in Rounds |-> "UNSEEN"]
+        
 Next == \/ /\ \E qc \in AllQCs :(
                 /\  NewQC(qc)
                 /\  round' = qc.r + 1
              )
 
+(***************************************************************************)
+(* Invariants                                                              *)
+(***************************************************************************)
+TypeOK == /\ round \in Nat
+          /\ QCs \subseteq [r: Rounds, prevQC: Rounds \union {-1}]
+          /\ nodeState \in [Rounds -> ValidRoundStates]
+          
 =============================================================================
 \* Modification History
-\* Last modified Mon Jun 13 14:47:52 ART 2022 by lambda
+\* Last modified Mon Jun 13 15:02:30 ART 2022 by lambda
 \* Created Mon Jun 13 08:53:58 ART 2022 by lambda

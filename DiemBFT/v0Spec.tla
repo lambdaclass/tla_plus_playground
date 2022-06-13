@@ -1,35 +1,44 @@
 ------------------------------- MODULE v0Spec -------------------------------
 
-EXTENDS Naturals
+EXTENDS Naturals, FiniteSets
 
-CONSTANTS
-    Honest,         \* The set of "Good" nodes
-    Byzantine,      \* The set of Byzantine nodes
-    F              \* The number (or upper bound actually) of Byzantine nodes
-    
+CONSTANT N
+
 VARIABLES 
-    round, 
-    leader,
-    roundResult,
-    roundProposal
+    round,
+    lastQCRound, 
+    lastTCRound
     
-vars == <<round, leader, roundResult, roundProposal>>
-    
-ValidProposal == "Valid"
-InvalidProposal == "Invalid"
+vars == <<round, lastQCRound, lastTCRound>>
 
-Nodes == Honest \union Byzantine \* The set of all nodes
+TypeOK ==   /\ round \in Nat
+            /\ lastQCRound \in Nat
+            /\ lastTCRound \in Nat
 
-ChangeLeader == leader # leader' /\ leader' \in Nodes 
-            /\ UNCHANGED <<round, roundResult, roundProposal>>
+Init == /\ round = 0
+        /\ lastTCRound = 0 
+        /\ lastQCRound = 0
 
-Init == round = 0 /\ Honest \intersect Byzantine = {} /\ leader \in Nodes
+increaseRound ==  /\ round' = round + 1
+                  /\ UNCHANGED <<lastTCRound, lastQCRound>>
 
-Next == TRUE
+commit ==   /\ round > lastQCRound
+            /\ round > lastTCRound
+            /\ lastQCRound' = round 
+            /\ UNCHANGED <<round, lastTCRound>>
+
+timeout ==   /\ round > lastQCRound
+            /\ round > lastTCRound
+            /\ lastTCRound' = round 
+            /\ UNCHANGED <<round, lastQCRound>>
+
+Next == \/ commit 
+        \/ timeout 
+        \/ increaseRound
 
 Spec == Init /\ [][Next]_vars
     
 =============================================================================
 \* Modification History
-\* Last modified Thu Jun 09 16:03:26 ART 2022 by lambda
+\* Last modified Fri Jun 10 12:29:07 ART 2022 by lambda
 \* Created Thu Jun 09 15:16:39 ART 2022 by lambda

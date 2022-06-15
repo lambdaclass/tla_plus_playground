@@ -26,6 +26,7 @@ MAX(a, b) == IF a > b THEN a ELSE b
 AllQCs == [r: Rounds, prevQC: Rounds \union {-1}]
 ExistsQC(r) == \E qc \in QCs : (qc.r = r)
 AllTCs == [r: Rounds, highQCRound: SUBSET Rounds]
+AllProposals == [r: Rounds, last_round_tc: Rounds] \* TODO: include last_round_tc and highest_block_qc
 
 (***************************************************************************)
 (* Formal Spec of Init State and Next State                                *)
@@ -60,7 +61,11 @@ NewTC(tc) == /\ tc.r >= round
              /\ RoundTCed(tc.r)
              /\ UNCHANGED <<QCs>>
              
-        
+NewProposal(p) == /\ p.r = round
+                  /\ latestTC' = MAX(p.last_round_tc, latestTC)
+                  /\ RoundReady(round)
+                  /\ UNCHANGED <<QCs, round>>
+
 Init == /\ round = 0
         /\ QCs = {}
         /\ nodeState = [n \in Rounds \union {R+1} |-> "UNSEEN"]
@@ -73,6 +78,9 @@ Next == \/ \E qc \in AllQCs : (
         \/ \E tc \in AllTCs : (
                 /\ NewTC(tc)
                 /\ round' = tc.r + 1
+            )
+        \/ \E p \in AllProposals : (
+                /\ NewProposal(p)
             )
 
 Spec == Init /\ [][Next]_<<nodeState, round, QCs, latestTC>>
@@ -87,5 +95,5 @@ TypeOK == /\ round \in Nat
           
 =============================================================================
 \* Modification History
-\* Last modified Wed Jun 15 12:46:46 ART 2022 by lambda
+\* Last modified Wed Jun 15 18:10:28 ART 2022 by lambda
 \* Created Mon Jun 13 08:53:58 ART 2022 by lambda

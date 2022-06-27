@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>v0Spec</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>toolbox.builder.TLAParserBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>toolbox.natures.TLANature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>V0SpecOld.tla</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/V0SpecOld.tla</locationURI>
+		</link>
+		<link>
+			<name>v0Spec.tla</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/v0Spec.tla</locationURI>
+		</link>
+	</linkedResources>
+</projectDescription>
